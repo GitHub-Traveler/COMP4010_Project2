@@ -17,7 +17,10 @@
 -   Besides data visualization, simple data mining techniques might also be applied to give predictions of future weather phenomena.
 
 ### 2.2 Dataset Description
-
+***The link for data set**: <https://climateknowledgeportal.worldbank.org/>*
+- We ultilize 2 datasets about the avarage **precipitation** and **surfaces temperatures** of 154 countries including their states / provinces ( therefore, there are up to 3776  recoreds representing several locations in total).
+- These 2 dataset are found on Climate Change Knowledge Portal (CCKP) is the hub for climate-related information, data, and tools for the World Bank Group (WBG).
+- We just collect mean records of each locations in July every year in 26 years ( 1997 to 2022). Although  there are some missing data points, their impacts are negligible because the dataset did not specify the countries they belong to
 ## 3. Project contribution
 
 -   Our project will contribute to:
