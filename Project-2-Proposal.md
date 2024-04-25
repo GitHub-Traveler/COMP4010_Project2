@@ -49,6 +49,5 @@ We strive for clarity and accuracy in our documentation, yet acknowledge that er
 
     -   Mr. Tran Anh Vu - [21vu.ta\@vinuni.edu.vn](mailto:21vu.ta@vinuni.edu.vn)
 
-    -   Mr. Nguyen Nhat Minh - 21minh.nn\@vinuni.edu.vn
+    -   Mr. Nguyen Nhat Minh - [21minh.nn\@vinuni.edu.vn](mailto:21minh.nn@vinuni.edu.vn)
 
-Your contributions and feedback are invaluable to the continuous improvement of VinGenie. We look forward to collaborating with you! 
