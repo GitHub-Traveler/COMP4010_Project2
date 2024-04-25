@@ -32,9 +32,9 @@
 
 ***The link for detailed plan**: <https://www.notion.so/COMP4010-Gantt-chart-0d69dd6b38084360949c7238cb75a8a2>*
 
-**Agile methodology:** The agile methodology will be used for the overall development process. This means that the project will be broken down into smaller, more manageable tasks, and each task will be tested and revised as needed. This will help to ensure that the chatbot is developed on time and within budget.  ![Task 0](image1.png){width="814"}
+**Agile methodology:** The agile methodology will be used for the overall development process. This means that the project will be broken down into smaller, more manageable tasks, and each task will be tested and revised as needed. This will help to ensure that the chatbot is developed on time and within budget.  ![Task 0](img/image1.png){width="814"}
 
-**Milestones:** we have allocated each of the milestones as a goal for each sprint. Specifically, we have 6 main sprints with each a specific increment in details, noted in the deliverable with further details can be found below. ![Task 0](image2.png){width="814"} ![Task 0](image3.png){width="814"} ![Task 0](image4.png){width="814"}
+**Milestones:** we have allocated each of the milestones as a goal for each sprint. Specifically, we have 6 main sprints with each a specific increment in details, noted in the deliverable with further details can be found below. ![Task 0](img/image2.png){width="814"} ![Task 0](img/image3.png){width="814"} ![Task 0](img/image4.png){width="814"}
 
 ## 5. Team Information
 
