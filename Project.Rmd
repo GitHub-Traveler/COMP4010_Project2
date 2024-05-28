@@ -1,0 +1,75 @@
+# Project 2: Visualization of global precipitation and global temperature
+
+```{r}
+# if(!require("devtools")) install.packages("devtools")
+# devtools::install_github("bwlewis/rthreejs
+
+# require(devtools)
+# install_github("Displayr/flipChartBasics", dependencies = NA)
+```
+
+```{r}
+df_surface_temp <- readxl::read_excel('surfaces_temp.xlsx')
+df_precipitation <- readxl::read_excel('precipitation.xlsx')
+```
+
+```{r}
+?globejs
+```
+
+```{r}
+library(stringr)
+
+df_precipitation_filtered <- df_precipitation[str_detect(df_precipitation$code, '^[A-Za-z]+$'), ]
+df_precipitation_filtered <- df_precipitation_filtered[, c('code', '1901-07')]
+df_precipitation_filtered <- na.omit(df_precipitation_filtered)
+names(df_precipitation_filtered)[names(df_precipitation_filtered) == '1901-07'] <- 'value'
+```
+
+```{r}
+dim(df_precipitation_filtered)
+```
+
+```{r}
+library(globe4r)
+create_globe(height = "100vh") %>% 
+  globe_choropleth(
+    coords(
+      country = code,
+      altitude = value,
+      cap_color = value
+    ), 
+    data = df_precipitation_filtered
+  ) %>% 
+  scale_choropleth_cap_color() %>%  
+  scale_choropleth_altitude(0.06, 0.1) 
+```
+
+```{r}
+
+
+# Install and load the required packages
+# install.packages("globe4r")
+# install.packages("shiny")
+
+library(globe4r)
+library(shiny)
+
+# Create a UI for the Shiny app
+ui <- fluidPage(
+  titlePanel("Rotatable Globe"),
+  mainPanel(
+    globeOutput("myGlobe")
+  )
+)
+
+# Define the server logic for the Shiny app
+server <- function(input, output) {
+  output$myGlobe <- renderGlobe({
+    globe4r()
+  })
+}
+
+# Run the application 
+shinyApp(ui = ui, server = server)
+```
