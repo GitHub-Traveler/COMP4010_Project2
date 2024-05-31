@@ -9,8 +9,28 @@
 ```
 
 ```{r}
+# CRAN version
+install.packages('leaflet')
+
+# Or Github version
+if (!require('devtools')) install.packages('devtools')
+#devtools::install_github('rstudio/leaflet')
+```
+
+```{r}
 df_surface_temp <- readxl::read_excel('surfaces_temp.xlsx')
 df_precipitation <- readxl::read_excel('precipitation.xlsx')
+```
+
+```{r}
+library(leaflet)
+m = leaflet() %>% addTiles()
+m  # a map with the default OSM tile layer
+
+m = m %>% setView(-93.65, 42.0285, zoom = 17)
+m
+
+m %>% addPopups(-93.65, 42.0285, 'Here is the <b>Department of Statistics</b>, ISU')
 ```
 
 ```{r}
