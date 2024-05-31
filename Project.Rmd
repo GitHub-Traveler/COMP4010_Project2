@@ -24,6 +24,7 @@ df_precipitation <- readxl::read_excel('precipitation.xlsx')
 
 ```{r}
 library(leaflet)
+# Test for 2d
 m = leaflet() %>% addTiles()
 m  # a map with the default OSM tile layer
 
