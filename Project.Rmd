@@ -11,6 +11,7 @@
 ```{r}
 df_surface_temp <- readxl::read_excel('surfaces_temp.xlsx')
 df_precipitation <- readxl::read_excel('precipitation.xlsx')
+df_precipitation
 ```
 
 ```{r}
@@ -32,7 +33,7 @@ dim(df_precipitation_filtered)
 
 ```{r}
 library(globe4r)
-create_globe(height = "100vh") %>% 
+world <- create_globe(height = "100vh") %>%
   globe_choropleth(
     coords(
       country = code,
@@ -42,34 +43,9 @@ create_globe(height = "100vh") %>%
     data = df_precipitation_filtered
   ) %>% 
   scale_choropleth_cap_color() %>%  
-  scale_choropleth_altitude(0.06, 0.1) 
-```
+  scale_choropleth_altitude(0.06, 0.1) %>%
+  show_atmosphere(show = TRUE) %>%
+  show_graticules(show = TRUE)
 
-```{r}
-
-
-# Install and load the required packages
-# install.packages("globe4r")
-# install.packages("shiny")
-
-library(globe4r)
-library(shiny)
-
-# Create a UI for the Shiny app
-ui <- fluidPage(
-  titlePanel("Rotatable Globe"),
-  mainPanel(
-    globeOutput("myGlobe")
-  )
-)
-
-# Define the server logic for the Shiny app
-server <- function(input, output) {
-  output$myGlobe <- renderGlobe({
-    globe4r()
-  })
-}
-
-# Run the application 
-shinyApp(ui = ui, server = server)
+world
 ```
