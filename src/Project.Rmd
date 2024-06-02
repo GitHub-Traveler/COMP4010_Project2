@@ -18,8 +18,8 @@ if (!require('devtools')) install.packages('devtools')
 ```
 
 ```{r}
-df_surface_temp <- readxl::read_excel('surfaces_temp.xlsx')
-df_precipitation <- readxl::read_excel('precipitation.xlsx')
+df_surface_temp <- read.csv('surfaces_temp.csv')
+df_precipitation <- read.csv('/data/precipitation.csv')
 df_precipitation
 ```
 
@@ -35,6 +35,23 @@ m %>% addPopups(-93.65, 42.0285, 'Here is the <b>Department of Statistics</b>, I
 ```
 
 ```{r}
+countries <- merge(countries, precipitation_data, by.x = "ISO_A3", by.y = "code")
+
+color_pal <- colorQuantile("YlOrRd", precipitation_data[[column_name]], n = 5)
+
+map <- leaflet(countries) %>%
+  addProviderTiles(providers$OpenStreetMap) %>%
+  addPolygons(fillColor = ~color_pal(eval(parse(text = column_name))),
+              fillOpacity = 0.8, 
+              color = "white", 
+              weight = 0.5,
+              popup = ~paste(NAME, ":", eval(parse(text = column_name)), "mm"))
+
+# Hiển thị bản đồ
+print(map)
+```
+
+```{r}
 ?globejs
 ```
 
@@ -45,6 +62,34 @@ df_precipitation_filtered <- df_precipitation[str_detect(df_precipitation$code, 
 df_precipitation_filtered <- df_precipitation_filtered[, c('code', '1901-07')]
 df_precipitation_filtered <- na.omit(df_precipitation_filtered)
 names(df_precipitation_filtered)[names(df_precipitation_filtered) == '1901-07'] <- 'value'
+```
+
+```{r}
+library(leaflet)
+library(sf)
+library(readxl)
+
+countries <- st_read("path_to_your_geojson_file.geojson")
+
+precipitation_data <- read_excel("path_to_your_excel_file.xlsx")
+
+column_name <- "2020-07"
+
+countries <- merge(countries, precipitation_data, by.x = "ISO_A3", by.y = "code")
+
+color_pal <- colorQuantile("YlOrRd", precipitation_data[[column_name]], n = 5)
+
+map <- leaflet(countries) %>%
+  addProviderTiles(providers$OpenStreetMap) %>%
+  addPolygons(fillColor = ~color_pal(eval(parse(text = column_name))),
+              fillOpacity = 0.8, 
+              color = "white", 
+              weight = 0.5,
+              popup = ~paste(NAME, ":", eval(parse(text = column_name)), "mm"))
+
+# Hiển thị bản đồ
+print(map)
+
 ```
 
 ```{r}
