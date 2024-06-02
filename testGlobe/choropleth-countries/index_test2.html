@@ -24,6 +24,7 @@
       const getVal = feat => tempMap.get(feat.properties.ISO_A3) || 0;
 
       const maxVal = Math.max(...countries.features.map(getVal));
+      console.log(maxVal)
       colorScale.domain([0, maxVal]);
 
       const world = Globe()
