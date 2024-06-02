@@ -18,78 +18,129 @@ if (!require('devtools')) install.packages('devtools')
 ```
 
 ```{r}
-df_surface_temp <- read.csv('surfaces_temp.csv')
-df_precipitation <- read.csv('/data/precipitation.csv')
+df_surface_temp <- read.csv('~/Data_Visualization/COMP4010_Project2/data/surfaces_temp.csv')
+df_precipitation <- read.csv('~/Data_Visualization/COMP4010_Project2/data/precipitation.csv')
 df_precipitation
 ```
 
 ```{r}
-library(leaflet)
-m = leaflet() %>% addTiles()
-m  # a map with the default OSM tile layer
-
-m = m %>% setView(-93.65, 42.0285, zoom = 17)
-m
-
-m %>% addPopups(-93.65, 42.0285, 'Here is the <b>Department of Statistics</b>, ISU')
+# Load and read the GeoJSON data
+countries <- st_read("~/Data_Visualization/COMP4010_Project2/data/ne_110m_admin_0_countries.geojson")
 ```
 
 ```{r}
-countries <- merge(countries, precipitation_data, by.x = "ISO_A3", by.y = "code")
+library(sf)
+library(leaflet)
+library(RColorBrewer)
 
-color_pal <- colorQuantile("YlOrRd", precipitation_data[[column_name]], n = 5)
+# Assume df_precipitation is already read and available
+column_name <- "X1993.07"
 
-map <- leaflet(countries) %>%
+# Merging country data with precipitation data
+merged_data <- merge(countries, df_precipitation, by.x = "ISO_A3", by.y = "code")
+
+# Check the head of the merged data to ensure merge was successful
+head(merged_data)
+
+# Remove or replace NA values in the precipitation data
+merged_data[[column_name]] <- ifelse(is.na(merged_data[[column_name]]), 0, merged_data[[column_name]])
+
+# Creating a color palette
+color_pal <- colorQuantile("YlOrRd", merged_data[[column_name]], n = 10)
+
+# Building the map
+map <- leaflet(merged_data) %>%
   addProviderTiles(providers$OpenStreetMap) %>%
-  addPolygons(fillColor = ~color_pal(eval(parse(text = column_name))),
+  addPolygons(fillColor = ~color_pal(get(column_name)),
               fillOpacity = 0.8, 
               color = "white", 
               weight = 0.5,
-              popup = ~paste(NAME, ":", eval(parse(text = column_name)), "mm"))
+              popup = ~paste(NAME, ":", get(column_name), "mm")) %>%
+  addLegend(pal = color_pal, values = merged_data[[column_name]],
+            title = "Precipitation (mm)",
+            opacity = 0.7,
+            position = "bottomright",
+            labFormat = labelFormat(suffix = " mm"))
 
-# Hiển thị bản đồ
+# Print the map
 print(map)
+
 ```
 
 ```{r}
-?globejs
+#install.packages("shiny")
+```
+
+```{r}
+library(shiny)
+library(leaflet)
+library(sf)
+library(RColorBrewer)
+
+# Define the UI for the application
+ui <- fluidPage(
+  titlePanel("Interactive Map with Year Slider"),
+  sidebarLayout(
+    sidebarPanel(
+      # Slider input for selecting the year
+      sliderInput("yearInput", "Select Year",
+                  min = 1901, max = 2020, value = 1901, step = 1),
+      width = 3
+    ),
+    mainPanel(
+      leafletOutput("map", width = "100%", height = "800px")
+    )
+  )
+)
+
+# Define server logic required to draw the map
+server <- function(input, output) {
+
+  output$map <- renderLeaflet({
+    # Dynamic column name based on slider input
+    column_name <- paste0("X", input$yearInput, ".07")  # Adjust formatting if necessary
+
+    # Filter and prepare the data
+    data_filtered <- df_precipitation[, c("code", column_name)]
+    names(data_filtered)[names(data_filtered) == column_name] <- 'value'
+    merged_data <- merge(countries, data_filtered, by.x = "ISO_A3", by.y = "code")
+    merged_data$value <- as.numeric(as.character(merged_data$value))
+    merged_data <- merged_data[!is.na(merged_data$value), ]
+
+    color_pal <- colorQuantile("YlOrRd", merged_data$value, n = 10)
+
+    # Create and return the Leaflet map
+    leaflet(merged_data) %>%
+      addTiles() %>%
+      addPolygons(fillColor = ~color_pal(value),
+                  fillOpacity = 0.8,
+                  color = "white",
+                  weight = 0.5,
+                  popup = ~paste(NAME, ":", value, "mm")) %>%
+      addLegend(pal = color_pal, values = merged_data$value,
+                title = "Precipitation (mm)",
+                opacity = 0.7,
+                position = "bottomright",
+                labFormat = labelFormat(suffix = " mm"))
+  })
+}
+
+# Run the application 
+shinyApp(ui = ui, server = server)
+
+```
+
+```{r}
+??globejs
 ```
 
 ```{r}
 library(stringr)
 
 df_precipitation_filtered <- df_precipitation[str_detect(df_precipitation$code, '^[A-Za-z]+$'), ]
-df_precipitation_filtered <- df_precipitation_filtered[, c('code', '1901-07')]
+df_precipitation_filtered <- df_precipitation_filtered[, c('code', 'X1901.07')]
 df_precipitation_filtered <- na.omit(df_precipitation_filtered)
-names(df_precipitation_filtered)[names(df_precipitation_filtered) == '1901-07'] <- 'value'
-```
-
-```{r}
-library(leaflet)
-library(sf)
-library(readxl)
-
-countries <- st_read("path_to_your_geojson_file.geojson")
-
-precipitation_data <- read_excel("path_to_your_excel_file.xlsx")
-
-column_name <- "2020-07"
-
-countries <- merge(countries, precipitation_data, by.x = "ISO_A3", by.y = "code")
-
-color_pal <- colorQuantile("YlOrRd", precipitation_data[[column_name]], n = 5)
-
-map <- leaflet(countries) %>%
-  addProviderTiles(providers$OpenStreetMap) %>%
-  addPolygons(fillColor = ~color_pal(eval(parse(text = column_name))),
-              fillOpacity = 0.8, 
-              color = "white", 
-              weight = 0.5,
-              popup = ~paste(NAME, ":", eval(parse(text = column_name)), "mm"))
-
-# Hiển thị bản đồ
-print(map)
-
+names(df_precipitation_filtered)[names(df_precipitation_filtered) == 'X1901.07'] <- 'value'
 ```
 
 ```{r}
