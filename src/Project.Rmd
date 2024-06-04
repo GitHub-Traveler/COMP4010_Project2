@@ -1,71 +1,250 @@
+---
+editor_options: 
+  markdown: 
+    wrap: 72
+---
+
 # Project 2: Visualization of global precipitation and global temperature
 
-```{r}
-# if(!require("devtools")) install.packages("devtools")
-# devtools::install_github("bwlewis/rthreejs
+## Introduction
 
-# require(devtools)
-# install_github("Displayr/flipChartBasics", dependencies = NA)
-```
+Our main questions are:
 
-```{r}
-# CRAN version
-install.packages('leaflet')
+-   What is the difference between temperature and precipitation between
+    regions in the world ?
+-   Is the change in surface temperature and precipitation in each
+    region over time significant? In what way? and what does this mean
+    for all of us?
 
-# Or Github version
-if (!require('devtools')) install.packages('devtools')
-#devtools::install_github('rstudio/leaflet')
-```
+Two questions above are heavily related to our current concern: climate
+change. To answer both of the above questions, we choose the dataset
+taken from WorldBank API, which is CRU-x0.5, for the precipitation and
+surface temperature of each country annually from 1901 to 2022. Due to
+this being a model approach to data (some entries not collected by
+devices at that time), there could be some inaccuracies in the data.
+However, CRU-x0.5 have most of its data taken by devices and real
+measurements, so it is a negligible problem.
 
-```{r}
-df_surface_temp <- readxl::read_excel('surfaces_temp.xlsx')
-df_precipitation <- readxl::read_excel('precipitation.xlsx')
-df_precipitation
-```
+There are two tables in our dataset, surface_temp and precipitation.
 
-```{r}
-library(leaflet)
-m = leaflet() %>% addTiles()
-m  # a map with the default OSM tile layer
+-   **surface_temp**:
 
-m = m %>% setView(-93.65, 42.0285, zoom = 17)
-m
+    -   **code/ISO_A3 (string):** The ISO_A3 code of each country in the
+        world. Some country may not have this code due to not being
+        recognized globally, so they are not present in this dataset
+        (for example, Somaliland).
 
-m %>% addPopups(-93.65, 42.0285, 'Here is the <b>Department of Statistics</b>, ISU')
-```
+    -   **country (string):** Name of the country.
 
-```{r}
-?globejs
-```
+    -   **1901-07 -\> 2022-07 (float)**: The surface temperature of each
+        year, from 1901 to 2022, collected in 7 a.m. at each morning.
+        Each column is a mean of surface temperature at that year.
 
-```{r}
-library(stringr)
+-   **precipitation**:
 
-df_precipitation_filtered <- df_precipitation[str_detect(df_precipitation$code, '^[A-Za-z]+$'), ]
-df_precipitation_filtered <- df_precipitation_filtered[, c('code', '1901-07')]
-df_precipitation_filtered <- na.omit(df_precipitation_filtered)
-names(df_precipitation_filtered)[names(df_precipitation_filtered) == '1901-07'] <- 'value'
-```
+    -   **code/ISO_A3 (string):** The ISO_A3 code of each country in the
+        world. Some country may not have this code due to not being
+        recognized globally, so they are not present in this dataset
+        (for example, Somaliland).
 
-```{r}
-dim(df_precipitation_filtered)
-```
+    -   **country (string):** Name of the country
 
-```{r}
-library(globe4r)
-world <- create_globe(height = "100vh") %>%
-  globe_choropleth(
-    coords(
-      country = code,
-      altitude = value,
-      cap_color = value
-    ), 
-    data = df_precipitation_filtered
-  ) %>% 
-  scale_choropleth_cap_color() %>%  
-  scale_choropleth_altitude(0.06, 0.1) %>%
-  show_atmosphere(show = TRUE) %>%
-  show_graticules(show = TRUE)
+    -   **1901-07 -\> 2022-07 (float)**: The mean precipitation of each
+        year, from 1901 to 2022, collected in 7 a.m. at each morning.
+        Each column is a total precipitation at that year.
 
-world
-```
+## Justification of approach
+
+Static charts struggle to depict how temperature and precipitation
+fluctuate across large areas and time periods. An interactive map
+addresses this issue by employing color shifts to indicate trends and
+geographical variances. Users can also examine individual years and zoom
+in for a more in-depth view, making it an excellent tool for
+comprehending complicated climate data.
+
+### Tendency of the global surface temperature/precipitation changes
+
+To have a comparison and intuitively see the trend of surface
+temperature/ precipitation, visualizing the differences among years
+would be more effective than separately showing the statistics of each
+year. Indeed, an animated global map that indicates how the temperature
+in each country has increased/ decreased over the years compared to that
+statistic in 1901 is necessary. The reason is that the differences can
+be emphasized thanks to modifications in colors and their intensities
+while the structured global map remains unchanged.  We use 2 different
+opposite, highly attractive colors: blues: for cooler areas and red: for
+hotter ones to help people realize the global trends of specific surface
+temperatures just by quickly scanning the map.
+
+Moreover, because of the large dataset including temperature changes in
+more than a century, the effort to slowly visualize the map in each year
+would be extremely time-consuming. Therefore, we decided to choose only
+a 50ms duration for each frame during the animation for better data
+visualization experiences. However, the fast refresh animation thus has
+to trade off the loss in the information provided by each frame.
+Specifically,  users might not have enough time to get essential
+information ( global trends, specific information about certain areas)
+or access the global maps in arbitrary years.  Therefore, we decided the
+add another slider control map to allow users to visit each specific
+year as well as zoom in/out to research information about certain areas.
+
+Averaging the temperature/precipitation data for countries in a
+continent/ region and allowing users to observe the changes at the
+regional level bringing back a more general and systematic perspective.
+
+### 3D Interactive Globe Visualization
+
+While a simple 2D map is adequate, it sometimes struggle to fully
+present all the data and insights in the dataset. In this case, an
+interactive 3D visualization is an improvement, because not only a 3D
+visualization will impress the audience at the beginning, but it can
+also present complex concepts such as accurate geographical location in
+the visualization. Thus, we think that a 3D interactive globe
+visualization would be ideal in this case.
+
+## Code
+
+## Final Product
+
+### 2D Animated Globe Visualization
+
+Initially,  we preprocessed the raw structured data to obtain the
+differences in temperature/precipitation in countries from 1902-2022
+compared to the based value in 1901.
+
+First, we create an interactive 2D map with a slider to show changes in
+precipitation and temperature over the years. When you hover over a
+specific country, the map will display its precipitation or temperature
+values. These values will be shown in different colors to indicate
+whether they are higher than those of other countries or have increased
+compared to the previous year.
+
+Then, we generate an animation illustrating changes in temperature/
+precipitation in countries based on a shiny app that includes an UI and
+a logical server. Specifically:
+
+-   We initialize a Leaflet map with the data, then add polygons,
+    dynamic color, and legend onto the generated map
+
+-   Reactive timer and values will be used for iteratively updating a
+    new “Year” variable after each 50ms. Therefore, create the animation
+    for the map.
+
+-   The getColor() function is responsible for extracting the proper
+    color for appropriate differences compared to the data in 1901 (the
+    more different, the higher the color intensity) 
+
+### 3D Interactive Globe Visualization
+
+In this part, we have a 3D Globe rendered using JavaScript.
+
+It can be access by running a live server on the machine and open the
+respective HTML file. There are two globes in our project: The globe
+about temperature change and precipitation change compared to Year 1901.
+The functionalities are:
+
+-   Globe rotation: The globe can be rotated by dragging the sphere
+    around.
+
+-   Country hovering and highlight: A country would be highlighted and
+    the information about that country is also displayed.
+
+-   Year Slider: The user can use the slider to choose which year will
+    be displayed on the globe.
+
+-   Legend: A gradient legend will be displayed in the bottom left of
+    the page.
+
+# Discussion
+
+## Changes in Temperature compared to 1901.
+
+As we observe from the animation, the initial trend of global warming
+was not unilateral because some areas were hotter while others
+experienced a decrease in surface temperature. However, in general,
+countries in the same region ( North America, Southeast Asia, Europe,
+etc.) tend to have similar changes during certain periods. For instance,
+from the 1920s to 1940s, Asian countries ( Russia, China, etc.) observed
+a slight increase in their temperature while the USA and Canada both saw
+a drop in temperature compared to 1901. Overall, industrialization was
+still in the first steps and the global population gradually decreased
+due to some wars from the 1920s - to the 1950s, the variance/
+differences in temperature were not significant ( mostly below 2 degrees
+C).
+
+The changes have become more dramatic and united since the explosion of
+the computer/ digital industry in the 1990s. From that point, the
+variance of surface temperature increases up to 3.5 degrees C in some
+countries ( Russia, Japan, Mongolia ). Moreover, since the 1990s, we can
+also observe more red areas on the map, which indicates the significant
+increase in global temperature. The number of blue areas notably dropped
+and reached its lowest record in 2015 with only 3 ( over \~ 200) 
+countries, which are Liberia, Chile, and New Caledonia, having lower
+temperatures compared to 1901. Even though surface temperatures in some
+countries have slightly decreased in the 2020s thanks to several timely
+strategies, the overall status of global warming is in a warning state.
+
+## Changes in Precipitation compared to 1901.
+
+Although the temperature has significantly fluctuated through the years
+from 1901 - 2022, we can observe a much more stable trend in
+precipitation. Overall, regions having high precipitation, South America
+and Southeast Asia in particular, remain in their positions in the rank
+of global precipitation by maintaining the average annual rain level
+from 1800-2800 mm. For other countries, the precipitation has a slight
+increase ( 40 -50 mm in annual indicator) in most of them, for instance,
+China (550mm in 1901 to 600mm in 2022) or the USA ( 650mm in 1901 to 704
+mm in 2022). However, there is still a minority of regions/countries
+where people experience a drop in annual precipitation, for instance,
+Mongolia ( 224mm in 1901 to 190mm in 2022).
+
+## Linear Regression
+
+The linear regression analysis of surface temperature/precipiation
+changes for China, the United Kingdom, Russia, the United States, and
+Vietnam reveals a significant upward trend in temperatures from the
+early 1900s to 2022. This consistent increase across multiple regions
+highlights the pervasive impact of global climate change, driven by
+factors such as industrialization, urbanization, and increased
+greenhouse gas emissions. For instance, China shows a clear upward trend
+in temperatures from the early 1900s to 2022, with significant
+fluctuations, particularly in recent decades. This increase is likely
+due to rapid industrialization and urbanization.
+
+Focusing on Vietnam, the data shows a more gradual but steady rise in
+surface temperatures. This trend is less pronounced compared to some
+other countries but still indicates the effects of global warming. The
+increasing temperatures in Vietnam can impact agriculture, water
+resources, and local ecosystems, necessitating adaptive measures to
+mitigate adverse effects.
+
+# Limitations
+
+The relationship between temperature and precipitation is complex and
+often non-linear. While warmer air can hold more moisture, leading to
+potentially heavier precipitation events, there are tipping points.
+Extremely high temperatures can suppress precipitation formation, and
+regional atmospheric circulation patterns significantly influence
+rainfall distribution.  Understanding these non-linear dynamics is
+crucial for accurate weather prediction and climate change modeling.
+
+Additionally, ensuring the accuracy and reliability of imputed data
+poses its own set of challenges. Despite these limitations, the
+application remains a powerful tool for visualizing climate data where
+available.
+
+# Future directions
+
+We propose creating an interactive map application with 2D and 3D views
+to visualize precipitation and temperature data dynamically. The app
+will update daily and provide notifications for significant changes.
+Users can explore detailed maps, viewing temperature and precipitation
+data down to the city level. This will be achieved using Shiny for the
+web interface, Leaflet for 2D maps, and CesiumJS for 3D visualizations.
+A robust backend will handle data updates and alert mechanisms. This
+tool aims to provide an accessible and detailed view of climate data,
+supporting better decision-making and awareness of environmental
+changes. Also, the 3D visualization is still lacking in terms of clarity
+and integration. In the future, we intend to incorporate the plot of
+temperature over year for each of the country when you clicked on it, as
+well as the linear regression for better interpretability.
