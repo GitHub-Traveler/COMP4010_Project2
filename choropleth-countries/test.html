@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Color Scale Legend</title>
+  <style>
+    .legend {
+      font-family: Arial, sans-serif;
+      font-size: 12px;
+    }
+
+    .legend-scale rect {
+      stroke: none;
+    }
+
+    .legend-title {
+      font-weight: bold;
+      margin-bottom: 5px;
+    }
+
+    .legend-scale text {
+      fill: #777;
+    }
+  </style>
+</head>
+<body>
+  <svg class="legend" width="200" height="100"></svg>
+
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+  <script>
+    // Define your color scale
+    const colorScale = d3.scaleSequential(d3.interpolateRdBu)
+      .domain([-2, 2]); // Adjusted domain values
+
+    // Define the legend dimensions and settings
+    const legendWidth = 200;
+    const legendHeight = 20;
+    const numSegments = 200; // Increased number of segments for smoother gradient
+    const segmentWidth = legendWidth / numSegments;
+
+    // Create the SVG for the legend
+    const svg = d3.select('.legend')
+      .append('g')
+      .attr('class', 'legend-scale')
+      .attr('transform', `translate(20,40)`);
+
+    // Append legend title
+    svg.append('text')
+      .attr('class', 'legend-title')
+      .attr('x', 0)
+      .attr('y', -10)
+      .text('Color Scale Legend');
+
+    // Create gradient legend
+    for (let i = 0; i < numSegments + 100; i++) {
+      svg.append('rect')
+        .attr('x', i * segmentWidth)
+        .attr('y', 0)
+        .attr('width', segmentWidth)
+        .attr('height', legendHeight)
+        .attr('fill', colorScale(-2 + (i / (numSegments - 1)) * 4)); // Adjusted domain values
+    }
+
+    // Add tick marks
+    const ticks = colorScale.ticks(5);
+    ticks.forEach((tick, i) => {
+      svg.append('text')
+        .attr('x', i * (legendWidth / 4))
+        .attr('y', legendHeight + 10)
+        .attr('dy', '0.35em')
+        .text(`${tick.toFixed(1)}`);
+    });
+  </script>
+</body>
+</html>

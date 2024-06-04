@@ -18,7 +18,7 @@
   <div id="globeViz" style="height: 90vh;"></div>
   
   <script>
-    const colorScale = d3.scaleSequentialSqrt(d3.interpolateRdYlBu).domain([2, -2]);
+    const colorScale = d3.scaleSequentialSqrt(d3.interpolateYlOrRd);
     let globe;
     let countriesData;
     let temperaturesData;
@@ -45,8 +45,7 @@
 
       // Set the initial selected year and update the globe
       yearSelect.value = years[0];
-      console.log("Initial year:", yearSelect.value);
-      updateGlobe(yearSelect.value);
+      updateGlobe(years[0]);
 
       // Add event listener to update the globe when the year is changed
       yearSelect.addEventListener('change', (event) => {
@@ -67,10 +66,11 @@
 
       // Function to get temperature value for each country
       const getVal = feat => tempMap.get(feat.properties.ISO_A3) || 0;
+      
       const maxVal = Math.max(...countriesData.features.map(getVal));
       console.log(`Max Temperature for Year ${selectedYear}:`, maxVal);
-      const x = 'ditcumay';
-      // colorScale.domain([2, -2]);
+
+      colorScale.domain([0, maxVal]);
 
       if (!globe) {
         globe = Globe()
@@ -86,11 +86,10 @@
             <b>${d.ADMIN} (${d.ISO_A3}):</b> <br />
             Temperature: <i>${getVal({properties: d})}</i> °C
           `)
-          .onPolygonHover(hoverD => {globe
+          .onPolygonHover(hoverD => globe
             .polygonAltitude(d => d === hoverD ? 0.12 : 0.06)
-            .polygonCapColor(d => d === hoverD ? 'steelblue' : colorScale(getVal(d)));
-
-      })
+            .polygonCapColor(d => d === hoverD ? 'steelblue' : colorScale(getVal(d)))
+          )
           .polygonsTransitionDuration(300)
         (document.getElementById('globeViz'));
       } else {
@@ -100,10 +99,6 @@
             <b>${d.ADMIN} (${d.ISO_A3}):</b> <br />
             Temperature: <i>${getVal({properties: d})}</i> °C
           `)
-          .onPolygonHover(hoverD => {globe
-            .polygonAltitude(d => d === hoverD ? 0.12 : 0.06)
-            .polygonCapColor(d => d === hoverD ? 'steelblue' : colorScale(getVal(d)))
-      })
           .polygonsTransitionDuration(300);
       }
     }

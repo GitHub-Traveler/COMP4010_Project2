@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Interactive 3D Globe with Temperature</title>
+    <style> body { margin: 0; } </style>
+
+    <script src="//unpkg.com/d3"></script>
+    <script src="//unpkg.com/globe.gl"></script>
+    <!--<script src="../../dist/globe.gl.js"></script>-->
+</head>
+
+<body>
+    <div id="controls">
+        <label for="yearSlider">Select Year:</label>
+        <input type="range" id="yearSlider" min="1970" max="2022" step="1">
+        <span id="selectedYear">1970</span>
+    </div>
+    <div id="globeViz" style="height: 90vh;"></div>
+    
+      
+  
+    <script>
+        const colorScale = d3.scaleSequentialSqrt(d3.interpolateRdYlBu).domain([2, -2]);
+        let globe;
+        let countriesData;
+        let temperaturesData;
+
+        // Load GeoJSON and CSV data
+        Promise.all([
+        fetch('../data/ne_110m_admin_0_countries.geojson').then(res => res.json()),
+        d3.csv('../data/df_surface_temp_longer.csv')  // Assuming the CSV file is named 'surfaces_temp.csv'
+        ]).then(([countries, temperatures]) => {
+            countriesData = countries;
+            temperaturesData = temperatures;
+
+            // Extract unique years from the temperature data
+            const years = [...new Set(temperatures.map(d => d.year))].sort();
+            
+            // Populate the dropdown with the available years
+            // Get references to the slider and the span to display selected year
+            // Get references to the slider and the span to display selected year
+            const yearSlider = document.getElementById('yearSlider');
+            const selectedYearSpan = document.getElementById('selectedYear');
+            const initialYear = 1901; // Set initial year to 1901
+            selectedYearSpan.textContent = initialYear;
+            yearSlider.value = initialYear;
+            // U
+            updateGlobe(initialYear)
+
+
+            // Add event listener to update the globe when the year is changed
+            yearSlider.addEventListener('input', (event) => {
+                const selectedYear = event.target.value;
+                selectedYearSpan.textContent = selectedYear;
+                updateGlobe(selectedYear);
+            });
+        });
+
+        function updateGlobe(selectedYear) {
+        // Filter temperature data based on the selected year
+        const filteredData = temperaturesData.filter(d => d.year === selectedYear);
+        console.log(`Filtered Data for Year ${selectedYear}:`, filteredData);
+
+        const tempMap = new Map(
+            filteredData.map(d => [d.ISO_A3, +d.temperature])
+        );
+        console.log(`Temperature Map for Year ${selectedYear}:`, tempMap);
+
+        // Function to get temperature value for each country
+        const getVal = feat => tempMap.get(feat.properties.ISO_A3) || 0;
+        const maxVal = Math.max(...countriesData.features.map(getVal));
+        console.log(`Max Temperature for Year ${selectedYear}:`, maxVal);
+        const x = 'ditcumay';
+        // colorScale.domain([2, -2]);
+
+        if (!globe) {
+            globe = Globe()
+            .globeImageUrl('//unpkg.com/three-globe/example/img/earth-night.jpg')
+            .backgroundImageUrl('//unpkg.com/three-globe/example/img/night-sky.png')
+            .lineHoverPrecision(0)
+            .polygonsData(countriesData.features.filter(d => d.properties.ISO_A2 !== 'AQ'))
+            .polygonAltitude(0.06)
+            .polygonCapColor(feat => colorScale(getVal(feat)))
+            .polygonSideColor(() => 'rgba(0, 100, 0, 0.15)')
+            .polygonStrokeColor(() => '#111')
+            .polygonLabel(({ properties: d }) => `
+                <b>${d.ADMIN} (${d.ISO_A3}):</b> <br />
+                Temperature: <i>${getVal({properties: d})}</i> °C
+            `)
+            .onPolygonHover(hoverD => {globe
+                .polygonAltitude(d => d === hoverD ? 0.12 : 0.06)
+                .polygonCapColor(d => d === hoverD ? 'steelblue' : colorScale(getVal(d)));
+
+        })
+            .polygonsTransitionDuration(300)
+            (document.getElementById('globeViz'));
+        } else {
+            globe.polygonsData(countriesData.features.filter(d => d.properties.ISO_A2 !== 'AQ'))
+            .polygonCapColor(feat => colorScale(getVal(feat)))
+            .polygonLabel(({ properties: d }) => `
+                <b>${d.ADMIN} (${d.ISO_A3}):</b> <br />
+                Temperature: <i>${getVal({properties: d})}</i> °C
+            `)
+            .onPolygonHover(hoverD => {globe
+                .polygonAltitude(d => d === hoverD ? 0.12 : 0.06)
+                .polygonCapColor(d => d === hoverD ? 'steelblue' : colorScale(getVal(d)));
+        })
+            .polygonsTransitionDuration(300);
+        }
+        }
+    </script>
+</body>
+</html>
