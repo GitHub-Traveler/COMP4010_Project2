@@ -104,8 +104,6 @@ visualization would be ideal in this case.
 
 ## Code
 
-## Final Product
-
 ### 2D Animated Globe Visualization
 
 Initially,  we preprocessed the raw structured data to obtain the
@@ -155,9 +153,9 @@ The functionalities are:
 -   Legend: A gradient legend will be displayed in the bottom left of
     the page.
 
-# Discussion
+## Discussion
 
-## Changes in Temperature compared to 1901.
+### Changes in Temperature compared to 1901.
 
 As we observe from the animation, the initial trend of global warming
 was not unilateral because some areas were hotter while others
@@ -184,7 +182,7 @@ temperatures compared to 1901. Even though surface temperatures in some
 countries have slightly decreased in the 2020s thanks to several timely
 strategies, the overall status of global warming is in a warning state.
 
-## Changes in Precipitation compared to 1901.
+### Changes in Precipitation compared to 1901.
 
 Although the temperature has significantly fluctuated through the years
 from 1901 - 2022, we can observe a much more stable trend in
@@ -198,7 +196,7 @@ mm in 2022). However, there is still a minority of regions/countries
 where people experience a drop in annual precipitation, for instance,
 Mongolia ( 224mm in 1901 to 190mm in 2022).
 
-## Linear Regression
+### Linear Regression
 
 The linear regression analysis of surface temperature/precipiation
 changes for China, the United Kingdom, Russia, the United States, and
@@ -218,7 +216,7 @@ increasing temperatures in Vietnam can impact agriculture, water
 resources, and local ecosystems, necessitating adaptive measures to
 mitigate adverse effects.
 
-# Limitations
+## Limitations
 
 The relationship between temperature and precipitation is complex and
 often non-linear. While warmer air can hold more moisture, leading to
@@ -233,7 +231,7 @@ poses its own set of challenges. Despite these limitations, the
 application remains a powerful tool for visualizing climate data where
 available.
 
-# Future directions
+## Future directions
 
 We propose creating an interactive map application with 2D and 3D views
 to visualize precipitation and temperature data dynamically. The app
