@@ -74,9 +74,9 @@ for (country in unique_countries) {
     geom_point() +
     geom_line() +
     geom_smooth(method = "lm", col = "blue") +
-    labs(title = paste("Linear Regression of Values Over Years for", unique(country_data$Name)),
+    labs(title = paste("Linear Regression of Surface Temperature Over Years for", unique(country_data$Name)),
          x = "Year",
-         y = "Value") +
+         y = "Temperature") +
     theme_minimal()
   
   print(p)
