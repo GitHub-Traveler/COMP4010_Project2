@@ -1,4 +1,4 @@
-ISO_A3,name,year,temperature_1,temperature
+ISO_A3,name,year,temperature,temperature_change
 ABW,Aruba (Neth.),1901,28.22,0.0
 ABW,Aruba (Neth.),1902,27.79,-0.43
 ABW,Aruba (Neth.),1903,27.89,-0.33
