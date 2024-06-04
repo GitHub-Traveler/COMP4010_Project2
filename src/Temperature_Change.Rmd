@@ -1,0 +1,212 @@
+# Project 2: Visualization of global precipitation and global temperature
+
+```{r}
+# if(!require("devtools")) install.packages("devtools")
+# devtools::install_github("bwlewis/rthreejs
+
+# require(devtools)
+# install_github("Displayr/flipChartBasics", dependencies = NA)
+```
+
+```{r}
+# CRAN version
+install.packages('leaflet')
+install.packages("sf")
+# Or Github version
+if (!require('devtools')) install.packages('devtools')
+#devtools::install_github('rstudio/leaflet')
+```
+
+
+```{r}
+df_surface_temp <- read.csv('temp_change.csv')
+df_precipitation <- read.csv('precipitation_change.csv')
+```
+
+```{r}
+# Load and read the GeoJSON data
+library(sf)
+countries <- st_read("ne_110m_admin_0_countries.geojson")
+```
+
+```{r}
+library(sf)
+library(leaflet)
+library(RColorBrewer)
+
+# Assume df_precipitation is already read and available
+column_name <- "X1993.07"
+
+# Merging country data with precipitation data
+merged_data <- merge(countries, df_surface_temp, by.x = "ISO_A3", by.y = "code")
+
+# Check the head of the merged data to ensure merge was successful
+head(merged_data)
+
+# Remove or replace NA values in the precipitation data
+merged_data[[column_name]] <- ifelse(is.na(merged_data[[column_name]]), 0, merged_data[[column_name]])
+
+# Creating a color palette
+color_pal <- colorQuantile("YlOrRd", merged_data[[column_name]], n = 10)
+
+# Building the map
+map <- leaflet(merged_data) %>%
+  addProviderTiles(providers$OpenStreetMap) %>%
+  addPolygons(fillColor = ~color_pal(get(column_name)),
+              fillOpacity = 0.8, 
+              color = "white", 
+              weight = 0.5,
+              popup = ~paste(NAME, ":", get(column_name), "mm")) %>%
+  addLegend(pal = color_pal, values = merged_data[[column_name]],
+            title = "Precipitation (mm)",
+            opacity = 0.7,
+            position = "bottomright",
+            labFormat = labelFormat())
+
+# Print the map
+print(map)
+
+```
+```{r}
+library(shiny)
+library(leaflet)
+library(sf)
+library(RColorBrewer)
+
+# Define the UI for the application
+ui <- fluidPage(
+  titlePanel("Interactive Map with Year Slider"),
+  sidebarLayout(
+    sidebarPanel(
+      # Slider input for selecting the year
+      sliderInput("yearInput", "Select Year",
+                  min = 1902, max = 2022, value = 1902, step = 1),
+      width = 3
+    ),
+    mainPanel(
+      leafletOutput("map", width = "100%", height = "800px")
+    )
+  )
+)
+
+# Define server logic required to draw the map
+server <- function(input, output) {
+
+  output$map <- renderLeaflet({
+    # Dynamic column name based on slider input
+    column_name <- paste0("X", input$yearInput, ".07")  # Adjust formatting if necessary
+
+    # Filter and prepare the data
+    data_filtered <- df_surface_temp[, c("code", column_name)]
+    names(data_filtered)[names(data_filtered) == column_name] <- 'value'
+    merged_data <- merge(countries, data_filtered, by.x = "ISO_A3", by.y = "code")
+    merged_data$value <- as.numeric(as.character(merged_data$value))
+    merged_data <- merged_data[!is.na(merged_data$value), ]
+
+    # Custom color and opacity function
+    getColor <- function(value) {
+      if (value == 0) {
+        return("yellow")
+      } else if (value > 0) {
+        red_intensity <- min(0.8, value / max(merged_data$value)+0.2) 
+
+        return(rgb(1, 0, 0, red_intensity))  # Blue with intensity based on value
+      } else {
+        blue_intensity <- min(0.8,  value / min(merged_data$value)+0.2)
+
+        return(rgb(0, 0, 1, blue_intensity))  # Red with intensity based on value
+      }
+    }
+
+    # Apply the color function to each value
+    merged_data$color <- sapply(merged_data$value, getColor)
+
+    # Create and return the Leaflet map
+    leaflet(merged_data) %>%
+      addTiles() %>%
+      addPolygons(fillColor = ~color,
+                  fillOpacity = 0.8,
+                  color = "white",
+                  weight = 0.5,
+                  popup = ~paste(NAME, ":", round(value, 2), "degree C")) %>%
+      addLegend(position = "bottomright",
+                title = "Precipitation (mm)",
+                opacity = 0.7,
+                labFormat = labelFormat(suffix = " mm"),
+                colors = c("yellow", rgb(1, 0, 0, 0.8), rgb(0, 0, 1, 0.8)),
+                labels = c("Non change", "Increase", "Decrease"))
+  })
+}
+
+# Run the application 
+shinyApp(ui = ui, server = server)
+```
+
+
+```{r}
+library(ggplot2)
+library(gganimate)
+library(dplyr)
+library(sf)
+
+# Ensure that your df_surface_temp and countries data frames are loaded
+
+# Create a single data frame containing data for all years
+all_years_data <- lapply(1902:2022, function(year) {
+  column_name <- paste0("X", year, ".07")
+  data_filtered <- df_surface_temp[, c("code", column_name)]
+  names(data_filtered)[names(data_filtered) == column_name] <- 'value'
+  data_filtered$year <- year
+  data_filtered
+}) %>% bind_rows()
+
+# Merge the data with spatial data
+all_years_merged <- merge(countries, all_years_data, by.x = "ISO_A3", by.y = "code")
+
+# Ensure value is numeric
+all_years_merged$value <- as.numeric(as.character(all_years_merged$value))
+all_years_merged <- all_years_merged[!is.na(all_years_merged$value), ]
+
+# Custom color and opacity function
+getColor <- function(value) {
+  if (value == 0) {
+    return("yellow")
+  } else if (value > 0) {
+    red_intensity <- min(0.8, value / max(all_years_merged$value) + 0.2)
+    return(rgb(1, 0, 0, red_intensity))  # Red with intensity based on value
+  } else {
+    blue_intensity <- min(0.8, value / min(all_years_merged$value) + 0.2)
+    return(rgb(0, 0, 1, blue_intensity))  # Blue with intensity based on value
+  }
+}
+
+# Apply the color function to each value
+all_years_merged$color <- sapply(all_years_merged$value, getColor)
+
+# Convert to sf object if not already
+all_years_merged_sf <- st_as_sf(all_years_merged)
+
+# Create the ggplot object
+p <- ggplot(data = all_years_merged_sf) +
+  geom_sf(aes(fill = color), color = "white", show.legend = FALSE) +
+  scale_fill_identity() +
+  labs(title = paste("Year:")) +  # Include both static and dynamic parts
+  theme_void()
+
+# Create the ggplot object
+p <- ggplot(data = all_years_merged_sf) +
+  geom_sf(aes(fill = color), color = "white", show.legend = FALSE) +
+  scale_fill_identity() +
+  labs(title = "Year: {frame_time}") +
+  theme_void()
+
+# Create the animation
+animation <- p +
+  transition_time(year) +
+  enter_fade() +
+  exit_fade() +
+  ease_aes('linear')
+
+# Animate and display
+animate(animation, nframes = length(unique(all_years_merged$year)), fps = 10)
+```
