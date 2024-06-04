@@ -62,7 +62,8 @@
             // Create the color legend
             createColorLegend();
         });
-
+        
+        // Function 
         function updateGlobe(selectedYear) {
             // Filter temperature data based on the selected year
             const filteredData = temperaturesData.filter(d => d.year === selectedYear);
@@ -115,6 +116,7 @@
             }
         }
 
+        // Function to create the legend.
         function createColorLegend() {
             const svg = d3.select("#legend");
             const width = +svg.attr("width");
