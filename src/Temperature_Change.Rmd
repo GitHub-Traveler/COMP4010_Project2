@@ -17,16 +17,93 @@ if (!require('devtools')) install.packages('devtools')
 #devtools::install_github('rstudio/leaflet')
 ```
 
+```{r}
+df_surface_temp <- read.csv('~/Data_Visualization/COMP4010_Project2/data/temp_change.csv')
+df_precipitation <- read.csv('~/Data_Visualization/COMP4010_Project2/data/precipitation_change.csv')
+```
 
 ```{r}
-df_surface_temp <- read.csv('temp_change.csv')
-df_precipitation <- read.csv('precipitation_change.csv')
+df_temp_change <- read.csv('~/Data_Visualization/COMP4010_Project2/data/surfaces_temp.csv')
+df_temp_vn <- df_temp_change[df_temp_change$code == 'VNM',]
+
+# Filter data for specific countries
+#countries <- c("United States of America", "United Kingdom", "Russian Federation", "China") 
+countries <- c("USA", "RUS", "GBR", "CHN", "VNM") 
+# ISO country codes for USA, UK, Russia, China
+df_countries <- df_temp_change[df_temp_change$code %in% countries,]
+
+# View the filtered data
+head(df_countries)
+
+```
+
+```{r}
+library(reshape2)
+
+# Reshape the data to long format
+df_long <- melt(df_countries, id.vars = c("code", "name"))
+
+# Extract year from variable names
+df_long$year <- as.numeric(sub("X(\\d{4}).*", "\\1", df_long$variable))
+
+# Rename columns for clarity
+df_long <- df_long[, c("code", "name", "year", "value")]
+colnames(df_long) <- c("Code", "Name", "Year", "Value")
+
+# View the reshaped data
+head(df_long)
+
+```
+
+```{r}
+library(ggplot2)
+
+# Perform linear regression and plot for each country
+unique_countries <- unique(df_long$Code)
+
+# Create a plot for each country
+for (country in unique_countries) {
+  country_data <- df_long[df_long$Code == country, ]
+  
+  # Perform Linear Regression
+  model <- lm(Value ~ Year, data = country_data)
+  summary(model)
+  
+  # Plot the Data with Regression Line
+  p <- ggplot(country_data, aes(x = Year, y = Value)) +
+    geom_point() +
+    geom_smooth(method = "lm", col = "blue") +
+    labs(title = paste("Linear Regression of Values Over Years for", unique(country_data$Name)),
+         x = "Year",
+         y = "Value") +
+    theme_minimal()
+  
+  print(p)
+}
+
+# Predict the value for the next year (2023) for each country
+for (country in unique_countries) {
+  country_data <- df_long[df_long$Code == country, ]
+  model <- lm(Value ~ Year, data = country_data)
+  new_data <- data.frame(Year = 2025)
+  prediction <- predict(model, newdata = new_data)
+  print(paste("Predicted value for the year 2025 for", unique(country_data$Name), ":", prediction))
+}
+
+
+```
+
+```{r}
+# Predict the value for the next year (2023)
+new_data <- data.frame(Year = 2023)
+prediction <- predict(model, newdata = new_data)
+print(paste("Predicted value for the year 2023:", prediction))
 ```
 
 ```{r}
 # Load and read the GeoJSON data
 library(sf)
-countries <- st_read("ne_110m_admin_0_countries.geojson")
+countries <- st_read("~/Data_Visualization/COMP4010_Project2/data/ne_110m_admin_0_countries.geojson")
 ```
 
 ```{r}
@@ -38,7 +115,7 @@ library(RColorBrewer)
 column_name <- "X1993.07"
 
 # Merging country data with precipitation data
-merged_data <- merge(countries, df_surface_temp, by.x = "ISO_A3", by.y = "code")
+merged_data <- merge(countries, df_precipitation, by.x = "ISO_A3", by.y = "code")
 
 # Check the head of the merged data to ensure merge was successful
 head(merged_data)
@@ -67,6 +144,7 @@ map <- leaflet(merged_data) %>%
 print(map)
 
 ```
+
 ```{r}
 library(shiny)
 library(leaflet)
@@ -75,7 +153,7 @@ library(RColorBrewer)
 
 # Define the UI for the application
 ui <- fluidPage(
-  titlePanel("Interactive Map with Year Slider"),
+  titlePanel("Global Surface Temperature Change with Year Slider"),
   sidebarLayout(
     sidebarPanel(
       # Slider input for selecting the year
@@ -94,7 +172,7 @@ server <- function(input, output) {
 
   output$map <- renderLeaflet({
     # Dynamic column name based on slider input
-    column_name <- paste0("X", input$yearInput, ".07")  # Adjust formatting if necessary
+    column_name <- paste0("X", input$yearInput, ".07")  # Adjust formatting
 
     # Filter and prepare the data
     data_filtered <- df_surface_temp[, c("code", column_name)]
@@ -130,9 +208,9 @@ server <- function(input, output) {
                   weight = 0.5,
                   popup = ~paste(NAME, ":", round(value, 2), "degree C")) %>%
       addLegend(position = "bottomright",
-                title = "Precipitation (mm)",
+                title = "Temperature (C)",
                 opacity = 0.7,
-                labFormat = labelFormat(suffix = " mm"),
+                labFormat = labelFormat(suffix = " C"),
                 colors = c("yellow", rgb(1, 0, 0, 0.8), rgb(0, 0, 1, 0.8)),
                 labels = c("Non change", "Increase", "Decrease"))
   })
@@ -142,14 +220,11 @@ server <- function(input, output) {
 shinyApp(ui = ui, server = server)
 ```
 
-
 ```{r}
 library(ggplot2)
 library(gganimate)
 library(dplyr)
 library(sf)
-
-# Ensure that your df_surface_temp and countries data frames are loaded
 
 # Create a single data frame containing data for all years
 all_years_data <- lapply(1902:2022, function(year) {
@@ -183,7 +258,7 @@ getColor <- function(value) {
 # Apply the color function to each value
 all_years_merged$color <- sapply(all_years_merged$value, getColor)
 
-# Convert to sf object if not already
+# Convert to sf object
 all_years_merged_sf <- st_as_sf(all_years_merged)
 
 # Create the ggplot object
